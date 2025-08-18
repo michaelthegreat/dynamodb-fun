@@ -1,0 +1,16 @@
+# a gitignore for a terraform fproject
+
+# Local .terraform directories
+.terraform/
+# Local .terraform.lock.hcl file
+.terraform.lock.hcl
+# Local tfstate files
+*.tfstate
+# Local tfstate backup files
+*.tfstate.backup
+# Crash log files
+crash.log
+
+streamed-lambda-response/package/
+# Ignore the lambda zip file
+lambda.zip
