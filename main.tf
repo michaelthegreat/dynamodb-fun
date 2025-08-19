@@ -41,14 +41,6 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# resource "aws_lambda_layer_version" "web_adapter_layer" {
-#   layer_name          = "AWSLambdaWebAdapter"
-#   compatible_runtimes = ["python3.7"]
-
-#   # Download the Lambda Web Adapter zip from GitHub and point to it here
-#   filename = "lambda-adapter.zip"
-# }
-
 resource "aws_lambda_function" "web_adapter_lambda" {
   function_name = "py37-stream-json"
   handler       = "run.sh"
@@ -71,7 +63,6 @@ resource "aws_lambda_function" "web_adapter_lambda" {
   }
 
   layers = [
-    # aws_lambda_layer_version.web_adapter_layer.arn
     "arn:aws:lambda:us-east-1:753240598075:layer:LambdaAdapterLayerArm64:24"
   ]
 }
