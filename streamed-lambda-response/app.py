@@ -58,21 +58,26 @@ def stream_pydantic_model(model: BaseModel, long_field: str, chunk_size: int = 1
 
     yield "\"}"
 
-@app.route("/", methods=["GET"])
-def stream_large_json():
-    DEBUG_REQUEST = False
-    DEBUG_STREAM = True
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def stream_large_json(path):
+    DEBUG_REQUEST = True
+    DEBUG_STREAM = False
+
     if DEBUG_REQUEST:
+        print("===============================")
         print("request", request)
+        print("path", request.path)
+        print("environ", request.environ)
+        print("url", request.url)
         print("--------------------------")
         print("dir(request )", dir(request))
+        print("request path", my_path)
+        # for every single item in dir(request), print it
         print("--------------------------")
-        print("request environ", request.environ)
-        print("--------------------------")
-        print("request headers", request.headers)
+        # print("what is mypath", my_path)
         print("===============================")
         try:
-            print("lets goooo")
             print("X-Amzn-Request-Context", request.headers["X-Amzn-Request-Context"])
             print("X-amazn-Lambda-Context", request.headers["X-Amzn-Lambda-Context"])
         except Exception as e:
@@ -81,8 +86,8 @@ def stream_large_json():
         return Response({
             "message": "Hello, World!",
         },content_type="application/json")
+        
     if DEBUG_STREAM:
-
         record = Record(
             record_id=1,
             attribute1="aabc",

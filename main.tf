@@ -23,6 +23,36 @@ resource "aws_dynamodb_table" "test_dynamo_table" {
         type = "S"
     }
 }
+
+
+resource "aws_dynamodb_table" "my_table" {
+  name           = "MyTable"
+  billing_mode   = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "i_type"
+    type = "S"
+  }
+
+  attribute {
+    name = "i_name"
+    type = "S"
+  }
+
+  hash_key  = "i_type"
+  range_key = "i_name"
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  ttl {
+    attribute_name = "ttl_exp"
+    enabled        = true
+  }
+}
+
+
 resource "aws_iam_role" "lambda_role" {
   name = "lambda_web_adapter_role"
 
@@ -80,4 +110,37 @@ resource "aws_lambda_function_url" "lambda_url" {
 
 output "function_url" {
   value = aws_lambda_function_url.lambda_url.function_url
+}
+
+# --- HTTP API Gateway wrapping the Function URL ---
+resource "aws_apigatewayv2_api" "http_api" {
+  name          = "stream-http-proxy"
+  protocol_type = "HTTP"
+}
+
+resource "aws_apigatewayv2_integration" "lambda_url_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "HTTP_PROXY"
+
+  integration_uri  = aws_lambda_function_url.lambda_url.function_url
+  integration_method = "ANY"
+  payload_format_version = "1.0"
+}
+
+# Route: /stream/{streamId}/now/{timeStamp}
+resource "aws_apigatewayv2_route" "stream_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /stream/{streamId}/now/{timeStamp}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_url_integration.id}"
+}
+
+resource "aws_apigatewayv2_stage" "default_stage" {
+  api_id      = aws_apigatewayv2_api.http_api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+# --- Output API URL ---
+output "api_gateway_invoke_url" {
+  value = "${aws_apigatewayv2_stage.default_stage.invoke_url}stream/{streamId}/now/{timeStamp}"
 }
