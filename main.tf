@@ -13,8 +13,8 @@ provider "aws" {
   region = "us-east-1"
 }
 # Dynamodb resources
-resource "aws_dynamodb_table" "test_dynamo_table" {
-    name = "test_dynamo_table"
+resource "aws_dynamodb_table" "test_cached_item_table" {
+    name = "test_cached_item_table"
     billing_mode = "PAY_PER_REQUEST"
     hash_key = "test_key"
 

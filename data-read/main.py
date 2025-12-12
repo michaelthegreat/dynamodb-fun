@@ -1,5 +1,8 @@
 import boto3
 from boto3.dynamodb.conditions import Key,Attr
+from pydantic import BaseModel
+from typing import List
+import json
 
 def read_test_item():
     test_table1 = "test_dynamo_table"
@@ -141,8 +144,54 @@ def get_item_by_type(
         return []
     return results
 
+class testClass(BaseModel):
+    class_id: int
+    class_name: str
+
+class TestParsedRecord(BaseModel):
+    record_id: int
+    attribute1: str
+    class_list: List[testClass]
+
+def insert_test_item_with_model():
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test_cached_item_table')
+    test_record = TestParsedRecord.parse_obj({
+        'record_id': 1,
+        'attribute1': "Sample Attribute",
+        'class_list': [
+            testClass(class_id=101, class_name="Class A"),
+            testClass(class_id=102, class_name="Class B")
+        ]
+    })
+    table.put_item(
+        Item={
+            'test_key': 'item_1',
+            'i_value': test_record.model_dump_json()
+        }
+    )
+
+def get_item_with_model():
+    # read items from test_cached_item_table with test_key = 'item_1'
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test_cached_item_table')
+    item = table.get_item(Key={'test_key': 'item_1'})['Item']
+    i_value = item['i_value']
+    print("i_value: ", i_value)
+    print("type of i_value: ", type(i_value))
+    parsed_record = TestParsedRecord.model_validate(json.loads(i_value))
+    print("Parsed Record: ", parsed_record)
+    return parsed_record
+
+READ_ITEM_WITH_MODEL = True
 
 def main():
+    if READ_ITEM_WITH_MODEL:
+        print("Inserting test item with model...")
+        insert_test_item_with_model()
+        print("Getting item with model...")
+        get_item_with_model()
+        return
     print("Starting data read...")
     print("read_test_item()")
     read_test_item()
